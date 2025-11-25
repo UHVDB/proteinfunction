@@ -1,21 +1,17 @@
-# UHVDB/proteinsimilarity
-A Nextflow wrapper for calculating the protein similarity between a query set of viruses and ICTV genomes.
+# UHVDB/proteinfunction
+A Nextflow wrapper for predicting the function of proteins predicted from metagenome assemblies.
 
 ### Overview
 This wrapper performs the following steps:
 
-*If `--vmr_dmnd` is specified and the DIAMOND database exists, skips to step 4*
-
-1. Download latest ICTV VMR specified with `--vmr_url` (`--email <your-email@email.com` needs to be specified for Entrez)
-2. Download ICTV genomes
-3. Call genes with pyrodigal-gv and create DIAMOND database of ICTV genomes
-4. Split query viruses into chunks of size `--chunk_size`
-5. Call genes for query chunks and align to ICTV database
-6. Perform self alignment of query genomes
-7. Calculate self score
-8. Calculate normalized score
-9. Combine normalized scores across chunks
-10. Clean up intermediate files (OPTIONAL: `--remove_tmp true`)
+1. Remove partial proteins from the `--input_faa` file
+2. Calculate the sequence hash and length of proteins in the `--input_faa` file
+3. Extract unique protein sequences based on the hash + length
+4. Cluster dereplicated protein sequences at `--min_id` % amino acid identity and `--min_cov` bidirectional coverage
+5. Download UniRef90 FAA file and creates an MMSeqs2 database
+6. Align protein cluster representatives to UniRef90
+7. Extract unaligned proteins and align to InterPro with HMMER
+8. 
 
 ### Quick start
 In addition to automated downloads and cleanup (limiting disk requirements), this wrapper also makes setup very easy.
@@ -28,17 +24,17 @@ First, install Conda/Mamba/Micromamba/Pixi
 
 Then create a Nextflow environment
 ```
-micromamba create -n nextflow -c conda-forge -c bioconda nextflow -y
+micromamba create -n nextflow -c conda-forge -c bioconda nextflow singularity -y
 ```
 
-Activate the Nextflow environemtn
+Activate the Nextflow environment
 ```
 micromamba activate nextflow
 ```
 
 Then just run the pipeline!
 ```
-nextflow run UHVDB/proteinsimilarity -profile test,<docker/singularity/conda/mamba>
+nextflow run UHVDB/proteinfunction -profile test,<docker/singularity/conda/mamba>
 ```
 
 ### Usage
