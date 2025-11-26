@@ -1,3 +1,0 @@
-[submodule "workflows/interproscan6"]
-	path = workflows/interproscan6
-	url = https://github.com/ebi-pf-team/interproscan6.git
