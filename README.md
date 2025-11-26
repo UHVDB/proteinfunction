@@ -4,14 +4,16 @@ A Nextflow wrapper for predicting the function of proteins predicted from metage
 ### Overview
 This wrapper performs the following steps:
 
-1. Remove partial proteins from the `--input_faa` file
-2. Calculate the sequence hash and length of proteins in the `--input_faa` file
-3. Extract unique protein sequences based on the hash + length
-4. Cluster dereplicated protein sequences at `--min_id` % amino acid identity and `--min_cov` bidirectional coverage
-5. Download UniRef90 FAA file and creates an MMSeqs2 database
-6. Align protein cluster representatives to UniRef90
-7. Extract unaligned proteins and align to InterPro with HMMER
-8. 
+1. From the `--input_faa` file, remove partial proteins, calculate protein hash + length, and dereplicate.
+2. Cluster dereplicated protein sequences at `--min_id` % amino acid identity and `--min_cov` bidirectional coverage
+3. Split cluster reps into chunks of size `--chunk_size`
+4. Download UniRef90 FAA file and creates an MMSeqs2 database
+5. Align each chunk to UniRef90
+6. Extract unaligned proteins and align to InterPro with HMMER
+7. Extract remaining proteins with no hits and align to alphafold50 with foldseek (ProstT5)
+8. Extract remaining proteins with no hits and predict structure with colabfold
+9. Segment predicted structures into domains
+10. Align domains to SCOP/CATH/EcoD
 
 ### Quick start
 In addition to automated downloads and cleanup (limiting disk requirements), this wrapper also makes setup very easy.

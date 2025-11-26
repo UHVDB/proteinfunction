@@ -6,9 +6,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Github : https://github.com/UHVDB/proteinfunction
 ----------------------------------------------------------------------------------------
-    Overview:
-        1. Download latest ICTV VMR (Nextflow)
-
 */
 
 
@@ -18,15 +15,15 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 process HASHDEREP {
-    label "process_low"
+    label "process_high"
 
     input:
     tuple val(meta), path(faa)
 
     output:
-    tuple val(meta), path("${meta.id}.fna.gz")                      , emit: faa
-    tuple val(meta), path(".command.log")                           , emit: log
-    tuple val(meta), path(".command.sh")                            , emit: script
+    tuple val(meta), path("${meta.id}.unique.faa.gz")  , emit: faa
+    tuple val(meta), path(".command.log")               , emit: log
+    tuple val(meta), path(".command.sh")                , emit: script
 
     script:
     """
@@ -68,7 +65,40 @@ process HASHDEREP {
         ${meta.id}.full.faa \\
         --pattern-file ${meta.id}.uniq.tsv \\
         --threads ${task.cpus} \\
-        --out-file ${meta.id}.uniq.faa.gz
+        --out-file ${meta.id}.unique.faa.gz
+
+    rm ${meta.id}.full.faa ${meta.id}.fx2tab.tsv ${meta.id}.uniq.tsv
+    """
+}
+
+process MMSEQS2_CLUSTER {
+    label "process_super_high"
+
+    input:
+    tuple val(meta), path(faa)
+
+    output:
+    tuple val(meta), path("${meta.id}_clusters_rep_seq.fasta.gz")   , emit: faa
+    tuple val(meta), path("${meta.id}_clusters_cluster.tsv")        , emit: tsv
+    tuple val(meta), path(".command.log")                           , emit: log
+    tuple val(meta), path(".command.sh")                            , emit: script
+
+    script:
+    """
+    # cluster with mmseqs2
+    mmseqs easy-cluster \\
+        --min-seq-id ${params.min_id} \\
+        -c ${params.min_cov} \\
+        --threads ${task.cpus} \\
+        --cluster-reassign 1 \\
+        ${faa} \\
+        ${meta.id}_clusters \\
+        ${meta.id}_clustTmp \\
+
+    pigz ${meta.id}_clusters_rep_seq.fasta
+    zstd ${meta.id}_clusters_cluster.tsv
+
+    rm -rf ${meta.id}_clustTmp ${meta.id}_clusters_all_seqs.fasta
     """
 }
 
@@ -88,6 +118,10 @@ workflow {
         // Remove partial proteins and dereplicate by hash+length
         HASHDEREP(
             ch_faa
+        )
+
+        MMSEQS2_CLUSTER(
+            HASHDEREP.out.faa
         )
 
 

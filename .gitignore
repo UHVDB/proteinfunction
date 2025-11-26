@@ -4,3 +4,6 @@ results/
 .vscode/
 tmp/
 *.csv
+tests/
+*.tsv
+*.zst
